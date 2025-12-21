@@ -25,3 +25,5 @@ RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/test --
 
 # Clean up Breeze clone
 RUN rm -rf /tmp/Breeze.jl
+
+ENV JULIA_DEPOT_PATH=/root/.julia:
