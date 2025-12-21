@@ -19,11 +19,12 @@ RUN julia --color=yes -e 'using InteractiveUtils; versioninfo()'
 RUN git clone --depth=1 https://github.com/NumericalEarth/Breeze.jl /tmp/Breeze.jl
 
 # Instantiate docs environment
-RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/docs -e 'using Pkg; Pkg.instantiate(); using CUDA; CUDA.set_runtime_version!(v"13"); CUDA.precompile_runtime()'
+RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/docs -e 'using Pkg; Pkg.instantiate(); using CUDA; CUDA.set_runtime_version!(v"13.1"); CUDA.precompile_runtime()'
 # Instantiate test environment (we need to use the same flags as used on CI)
-RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/test --check-bounds=yes --warn-overwrite=yes --depwarn=yes --inline=yes --startup-file=no -e 'using Pkg; Pkg.instantiate(); using CUDA; CUDA.set_runtime_version!(v"13"); CUDA.precompile_runtime()'
+RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/test --check-bounds=yes --warn-overwrite=yes --depwarn=yes --inline=yes --startup-file=no -e 'using Pkg; Pkg.instantiate(); using CUDA; CUDA.set_runtime_version!(v"13.1"); CUDA.precompile_runtime()'
 
 # Clean up Breeze clone
 RUN rm -rf /tmp/Breeze.jl
 
+# Explicitly set the Julia depot path
 ENV JULIA_DEPOT_PATH=/root/.julia:
