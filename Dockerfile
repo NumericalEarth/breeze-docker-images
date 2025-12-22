@@ -46,13 +46,14 @@ RUN . /julia_cpu_target.sh && julia --color=yes -e '#= make bundled depot non-wr
 RUN . /julia_cpu_target.sh && julia --color=yes -e 'using Pkg; Pkg.add("CUDA"); \
               using CUDA; CUDA.precompile_runtime()'
 
-# # Clone Breeze
-# RUN git clone --depth=1 https://github.com/NumericalEarth/Breeze.jl /tmp/Breeze.jl
+# Clone Breeze
+RUN git clone --depth=1 https://github.com/NumericalEarth/Breeze.jl /tmp/Breeze.jl
 
-# # Instantiate docs environment
-# RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/docs -e 'using Pkg; Pkg.instantiate(); using CUDA; CUDA.set_runtime_version!(v"13.1"); CUDA.precompile_runtime(); Base.compilecache(Base.PkgId(Base.UUID("76a88914-d11a-5bdc-97e0-2f5a05c973a2"), "CUDA_Runtime_jll"))'
-# # Instantiate test environment (we need to use the same flags as used on CI)
-# RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/test --check-bounds=yes --warn-overwrite=yes --depwarn=yes --inline=yes --startup-file=no -e 'using Pkg; Pkg.instantiate(); using CUDA; CUDA.set_runtime_version!(v"13.1"); CUDA.precompile_runtime(); Base.compilecache(Base.PkgId(Base.UUID("76a88914-d11a-5bdc-97e0-2f5a05c973a2"), "CUDA_Runtime_jll"))'
+# Instantiate docs environment
+RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/docs -e 'using Pkg; Pkg.instantiate()'
+# Instantiate test environment (we need to use the same flags as used when
+# running the tests)
+RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/test --check-bounds=yes --warn-overwrite=yes --depwarn=yes --inline=yes --startup-file=no -e 'using Pkg; Pkg.instantiate()'
 
-# # Clean up Breeze clone
-# RUN rm -rf /tmp/Breeze.jl
+# Clean up Breeze clone
+RUN rm -rf /tmp/Breeze.jl
