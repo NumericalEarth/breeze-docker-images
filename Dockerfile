@@ -40,7 +40,10 @@ RUN . /julia_cpu_target.sh && julia --color=yes -e '#= make bundled depot non-wr
               #= revert bundled depot changes =# \
               run(`find $bundled_depot/compiled -type f -writable -exec chmod +w \{\} \;`)' && \
     #= demote the JLL to an [extras] dep =# \
-    find /usr/local/share/julia/environments -name Project.toml -exec sed -i 's/deps/extras/' {} +
+    find /usr/local/share/julia/environments -name Project.toml -exec sed -i 's/deps/extras/' {} + && \
+    #= remove nondeterminisms =# \
+    find -exec touch -h -d "@0" {} + && \
+    touch -h -d "@0" /usr/local/share
 
 # install CUDA.jl itself
 RUN . /julia_cpu_target.sh && julia --color=yes -e 'using Pkg; Pkg.add("CUDA"); \
