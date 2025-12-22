@@ -18,6 +18,9 @@ COPY julia_cpu_target.sh /julia_cpu_target.sh
 # have a consistent and persistent depot path.
 ENV JULIA_DEPOT_PATH=/usr/local/share/julia:
 
+# Set a default version-independent project.
+ENV JULIA_PROJECT='@breeze'
+
 # Follow https://github.com/JuliaGPU/CUDA.jl/blob/5d9474ae73fab66989235f7ff4fd447d5ee06f8e/Dockerfile
 
 ARG CUDA_VERSION=13.0
@@ -29,7 +32,7 @@ RUN . /julia_cpu_target.sh && julia --color=yes -e '#= make bundled depot non-wr
               bundled_depot = last(DEPOT_PATH); \
               run(`find $bundled_depot/compiled -type f -writable -exec chmod -w \{\} \;`); \
               #= configure the preference =# \
-              env = "/usr/local/share/julia/environments/v$(VERSION.major).$(VERSION.minor)"; \
+              env = "/usr/local/share/julia/environments/breeze"; \
               mkpath(env); \
               write("$env/LocalPreferences.toml", \
                     "[CUDA_Runtime_jll]\nversion = \"'${CUDA_VERSION}'\""); \
