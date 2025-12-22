@@ -20,7 +20,7 @@ ENV JULIA_DEPOT_PATH=/usr/local/share/julia:
 
 # Follow https://github.com/JuliaGPU/CUDA.jl/blob/5d9474ae73fab66989235f7ff4fd447d5ee06f8e/Dockerfile
 
-ARG CUDA_VERSION=13.1
+ARG CUDA_VERSION=13.0
 
 # pre-install the CUDA toolkit from an artifact. we do this separately from CUDA.jl so that
 # this layer can be cached independently. it also avoids double precompilation of CUDA.jl in
