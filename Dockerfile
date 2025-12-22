@@ -59,7 +59,7 @@ RUN git clone --depth=1 https://github.com/NumericalEarth/Breeze.jl /tmp/Breeze.
 RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/docs -e 'using Pkg; Pkg.instantiate()'
 # Instantiate test environment (we need to use the same flags as used when
 # running the tests)
-RUN cp /usr/local/share/julia/environments/breeze /tmp/Breeze.jl/test/.
+RUN cp /usr/local/share/julia/environments/breeze/LocalPreferences.toml /tmp/Breeze.jl/test/.
 RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/test --check-bounds=yes -e 'using Pkg; Pkg.instantiate()'
 
 # Clean up Breeze clone
