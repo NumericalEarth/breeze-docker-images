@@ -4,7 +4,7 @@ FROM julia:1.12.2
 # Install some dependencies
 RUN /bin/sh -c 'export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
-    && apt-get install -y git jq \
+    && apt-get install -y git jq earlyoom \
     && apt-get --purge autoremove -y \
     && apt-get autoclean \
     && rm -rf /var/lib/apt/lists/*'
