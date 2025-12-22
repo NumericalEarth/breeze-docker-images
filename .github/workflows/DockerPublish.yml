@@ -13,7 +13,6 @@ on:
     paths: &paths
       - '.github/workflows/DockerPublish.yml'
       - 'Dockerfile'
-      - 'Project.toml'
       - 'julia_cpu_target.sh'
       - '**/*.jl'
   pull_request:
