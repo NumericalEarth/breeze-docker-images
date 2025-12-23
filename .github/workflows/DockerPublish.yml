@@ -5,7 +5,8 @@
 name: Publish Docker image
 
 on:
-  schedule: "30 19 * * 1"
+  schedule:
+    - cron: "30 19 * * 1"
   workflow_dispatch:
   push:
     branches: [ "main" ]
