@@ -13,6 +13,9 @@ RUN /bin/sh -c 'export DEBIAN_FRONTEND=noninteractive \
 # way, so we have to keep an external script and source it every time we need it.
 COPY julia_cpu_target.sh /julia_cpu_target.sh
 
+ARG CHECK_BOUNDS=auto
+ARG ENV_NAME=docs
+
 # Explicitly set the Julia depot path: on GitHub Actions the user's home
 # directory may be somewhere else (e.g. `/github`), so we need to be sure we
 # have a consistent and persistent depot path.
@@ -29,7 +32,7 @@ ARG CUDA_VERSION=13.0
 # pre-install the CUDA toolkit from an artifact. we do this separately from CUDA.jl so that
 # this layer can be cached independently. it also avoids double precompilation of CUDA.jl in
 # order to call `CUDA.set_runtime_version!`.
-RUN . /julia_cpu_target.sh && julia --color=yes -e '#= make bundled depot non-writable (JuliaLang/Pkg.jl#4120) =# \
+RUN . /julia_cpu_target.sh && julia --color=yes --check-bounds=${CHECK_BOUNDS} -e '#= make bundled depot non-writable (JuliaLang/Pkg.jl#4120) =# \
               bundled_depot = last(DEPOT_PATH); \
               run(`find $bundled_depot/compiled -type f -writable -exec chmod -w \{\} \;`); \
               #= configure the preference =# \
@@ -46,21 +49,15 @@ RUN . /julia_cpu_target.sh && julia --color=yes -e '#= make bundled depot non-wr
     #= demote the JLL to an [extras] dep =# \
     find /usr/local/share/julia/environments -name Project.toml -exec sed -i 's/deps/extras/' {} +
 
-# install CUDA.jl itself, for both configurations
-RUN . /julia_cpu_target.sh && julia --color=yes -e 'using Pkg; Pkg.add("CUDA"); \
-    using CUDA; CUDA.precompile_runtime()'
-RUN . /julia_cpu_target.sh && julia --color=yes --check-bounds=yes -e 'using Pkg; Pkg.add("CUDA"); \
+# install CUDA.jl itself
+RUN . /julia_cpu_target.sh && julia --color=yes --check-bounds=${CHECK_BOUNDS} -e 'using Pkg; Pkg.add("CUDA"); \
     using CUDA; CUDA.precompile_runtime()'
 
 # Clone Breeze
 RUN git clone --depth=1 https://github.com/NumericalEarth/Breeze.jl /tmp/Breeze.jl
 
-# Instantiate docs environment
-RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/docs -e 'using Pkg; Pkg.instantiate()'
-# Instantiate test environment (we need to use the same flags as used when
-# running the tests)
-RUN cp /usr/local/share/julia/environments/breeze/LocalPreferences.toml /tmp/Breeze.jl/test/.
-RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/test --check-bounds=yes -e 'using Pkg; Pkg.instantiate()'
+# Instantiate environment
+RUN . /julia_cpu_target.sh && julia --color=yes --project=/tmp/Breeze.jl/${ENV_NAME} --check-bounds=${CHECK_BOUNDS} -e 'using Pkg; Pkg.instantiate()'
 
 # Clean up Breeze clone
 RUN rm -rf /tmp/Breeze.jl
