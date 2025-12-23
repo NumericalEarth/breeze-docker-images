@@ -196,7 +196,7 @@ jobs:
               # each f contains a digest per arch
               DIG=$(cat "${f}")
               PLATFORM=${f##*/}            # e.g. "docs-linux-amd64"
-              SOURCES="${SOURCES} --source ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${DIG}"
+              SOURCES="${SOURCES} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${DIG}"
             done
             docker buildx imagetools create \
               --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VARIANT} \
