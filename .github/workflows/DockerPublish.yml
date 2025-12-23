@@ -5,6 +5,7 @@
 name: Publish Docker image
 
 on:
+  scheduled: "30 19 * * 1"
   workflow_dispatch:
   push:
     branches: [ "main" ]
