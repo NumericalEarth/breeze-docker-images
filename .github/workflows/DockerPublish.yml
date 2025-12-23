@@ -117,7 +117,9 @@ jobs:
           # See: https://docs.docker.com/build/ci/github-actions/cache/#github-cache
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: "--build-arg CHECK_BOUNDS=${{ matrix.check-bounds }} --build-arg ENV_NAME=${{ matrix.tag_suffix }}"
+          build-args: |
+            CHECK_BOUNDS=${{ matrix.check-bounds }}
+            ENV_NAME=${{ matrix.tag_suffix }}
 
       - name: Export digest
         run: |
