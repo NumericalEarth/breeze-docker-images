@@ -122,7 +122,7 @@ jobs:
       - name: Export digest
         run: |
           mkdir -p /tmp/digests
-          echo "${{ steps.build.outputs.digest }}" > /tmp/digests/${{ matrix.tag_suffix }}-${{ matrix.platform//\//- }}
+          echo "${{ steps.build.outputs.digest }}" > /tmp/digests/${{ matrix.tag_suffix }}-$(echo ${{ matrix.platform }} | tr / -)"
       - name: Upload digest
         uses: actions/upload-artifact@v6
         with:
