@@ -108,7 +108,7 @@ jobs:
             JULIA_VERSION=${{ matrix.julia_version }}
             CHECK_BOUNDS=${{ matrix.check-bounds }}
             ENV_NAME=${{ matrix.tag_prefix }}
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.tag_prefix }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.tag_prefix }}-julia_${{ matrix.julia_version }}
           # # See: https://docs.docker.com/build/ci/github-actions/cache/#github-cache
           # cache-from: type=gha
           # cache-to: type=gha,mode=max
