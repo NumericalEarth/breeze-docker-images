@@ -46,8 +46,8 @@ jobs:
           - platform: linux/amd64
             os: ubuntu-latest
             tag_prefix: test
-            julia_version: '1.12.4'
             check-bounds: 'yes'
+            julia_version: '1.12.4'
           # - platform: linux/arm64
           #   os: ubuntu-24.04-arm
           #   tag_prefix: docs
