@@ -121,7 +121,7 @@ jobs:
       - name: Upload digest
         uses: actions/upload-artifact@v6
         with:
-          name: digests-${{ matrix.tag_prefix }}
+          name: digests-${{ matrix.tag_prefix }}-julia_${{ matrix.julia_version }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
