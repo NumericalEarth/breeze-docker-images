@@ -40,20 +40,24 @@ jobs:
         include:
           - platform: linux/amd64
             os: ubuntu-latest
-            tag_suffix: docs
+            tag_prefix: docs
             check-bounds: 'auto'
+            julia_version: '1.12.4'
           - platform: linux/amd64
             os: ubuntu-latest
-            tag_suffix: test
+            tag_prefix: test
+            julia_version: '1.12.4'
             check-bounds: 'yes'
           # - platform: linux/arm64
           #   os: ubuntu-24.04-arm
-          #   tag_suffix: docs
+          #   tag_prefix: docs
           #   check-bounds: 'false'
+          #   julia_version: '1.12.4'
           # - platform: linux/arm64
           #   os: ubuntu-24.04-arm
-          #   tag_suffix: test
+          #   tag_prefix: test
           #   check-bounds: 'true'
+          #   julia_version: '1.12.4'
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
@@ -101,9 +105,10 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           platforms: ${{ matrix.platform }}
           build-args: |
+            JULIA_VERSION=${{ matrix.julia_version }}
             CHECK_BOUNDS=${{ matrix.check-bounds }}
-            ENV_NAME=${{ matrix.tag_suffix }}
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.tag_suffix }}
+            ENV_NAME=${{ matrix.tag_prefix }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.tag_prefix }}
           # # See: https://docs.docker.com/build/ci/github-actions/cache/#github-cache
           # cache-from: type=gha
           # cache-to: type=gha,mode=max
@@ -111,12 +116,12 @@ jobs:
       - name: Export digest
         run: |
           mkdir -p /tmp/digests
-          echo "${{ steps.build.outputs.digest }}" > /tmp/digests/${{ matrix.tag_suffix }}-$(echo ${{ matrix.platform }} | tr / -)
+          echo "${{ steps.build.outputs.digest }}" > /tmp/digests/${{ matrix.tag_prefix }}-julia_${{ matrix.julia_version }}-$(echo ${{ matrix.platform }} | tr / -)
 
       - name: Upload digest
         uses: actions/upload-artifact@v6
         with:
-          name: digests-${{ matrix.tag_suffix }}
+          name: digests-${{ matrix.tag_prefix }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
@@ -163,14 +168,13 @@ jobs:
       - name: Create manifest lists for each tag
         run: |
           for file in /tmp/digests/*; do
-            TAG=${file##*/}                # e.g. "docs-linux-amd64"
-            VARIANT=${TAG%-*}              # e.g. "docs"
+            TAG=${file##*/}                        # e.g. "docs-julia_1.12.4-linux-amd64"
+            VARIANT=$(echo ${TAG} | cut -d- -f1-2) # e.g. "docs-julia_1.12.4"
             # buildx imagetools needs: -t registry/image:tag and sources
             SOURCES=""
             for f in /tmp/digests/${VARIANT}-*; do
               # each f contains a digest per arch
               DIG=$(cat "${f}")
-              PLATFORM=${f##*/}            # e.g. "docs-linux-amd64"
               SOURCES="${SOURCES} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${DIG}"
             done
             docker buildx imagetools create \

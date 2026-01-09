@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
-FROM julia:1.12.2
+ARG JULIA_VERSION=1.12.4
+FROM julia:${JULIA_VERSION}
 
 # Install some dependencies
 RUN /bin/sh -c 'export DEBIAN_FRONTEND=noninteractive \
