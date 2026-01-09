@@ -1,6 +1,6 @@
 # Docker images for Breeze.jl
 
-This repo contains [Docker images](https://github.com/NumericalEarth/breeze-docker-images/pkgs/container/breeze-docker-images) to be used for the Julia package [`Breeze.jl`](github.com/NumericalEarth/Breeze.jl).
+This repo contains [Docker images](https://github.com/NumericalEarth/breeze-docker-images/pkgs/container/breeze-docker-images) to be used for the Julia package [`Breeze.jl`](https://github.com/NumericalEarth/Breeze.jl).
 
 ## `Dockerfile`
 
