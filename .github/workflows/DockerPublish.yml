@@ -45,6 +45,11 @@ jobs:
             julia_version: '1.12.4'
           - platform: linux/amd64
             os: ubuntu-latest
+            tag_prefix: benchmarking
+            check-bounds: 'auto'
+            julia_version: '1.12.4'
+          - platform: linux/amd64
+            os: ubuntu-latest
             tag_prefix: test
             check-bounds: 'yes'
             julia_version: '1.12.4'
