@@ -124,7 +124,7 @@ jobs:
           echo "${{ steps.build.outputs.digest }}" > /tmp/digests/${{ matrix.tag_prefix }}-julia_${{ matrix.julia_version }}-$(echo ${{ matrix.platform }} | tr / -)
 
       - name: Upload digest
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: digests-${{ matrix.tag_prefix }}-julia_${{ matrix.julia_version }}
           path: /tmp/digests/*
