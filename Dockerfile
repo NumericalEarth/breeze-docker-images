@@ -38,7 +38,11 @@ RUN gcc -shared -Wl,-soname=libcuda.so.1 -o libcuda.so.1 /dev/null
 # pre-install the CUDA toolkit from an artifact. we do this separately from CUDA.jl so that
 # this layer can be cached independently. it also avoids double precompilation of CUDA.jl in
 # order to call `CUDA.set_runtime_version!`.
-RUN . /julia_cpu_target.sh && julia --color=yes --check-bounds=${CHECK_BOUNDS} -e '#= make bundled depot non-writable (JuliaLang/Pkg.jl#4120) =# \
+# Note: we first install install `Reactant` & `Reactant_jll` to resolve the environment
+# together, and then remove `Reactant` because we don't need it at this stage, and finally
+# we precompile the environment.  This should hopefully avoid installing two large
+# `Reactant_jll` artifacts when we later instantiate the environment.
+RUN . /julia_cpu_target.sh && JULIA_PKG_PRECOMPILE_AUTO="false" julia --color=yes --check-bounds=${CHECK_BOUNDS} -e '#= make bundled depot non-writable (JuliaLang/Pkg.jl#4120) =# \
               bundled_depot = last(DEPOT_PATH); \
               run(`find $bundled_depot/compiled -type f -writable -exec chmod -w \{\} \;`); \
               #= configure the preference =# \
@@ -47,9 +51,11 @@ RUN . /julia_cpu_target.sh && julia --color=yes --check-bounds=${CHECK_BOUNDS} -
               write("$env/LocalPreferences.toml", \
                     "[CUDA_Runtime_jll]\nversion = \"'${CUDA_VERSION}'\"\n[Reactant_jll]\ngpu = \"cuda\"\ngpu_version = \"'${REACTANT_CUDA_VERSION}'\""); \
               \
-              #= install the JLL =# \
+              #= install the JLLs =# \
               using Pkg; \
-              Pkg.add(["CUDA_Runtime_jll", "Reactant_jll"]); \
+              Pkg.add(["CUDA_Runtime_jll", "Reactant_jll", "Reactant"]); \
+              Pkg.rm("Reactant"); \
+              Pkg.precompile(); \
               #= revert bundled depot changes =# \
               run(`find $bundled_depot/compiled -type f -writable -exec chmod +w \{\} \;`)' && \
     #= demote the JLL to an [extras] dep =# \
