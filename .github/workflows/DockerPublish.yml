@@ -42,27 +42,17 @@ jobs:
             os: ubuntu-latest
             tag_prefix: docs
             check-bounds: 'auto'
-            julia_version: '1.12.4'
+            julia_version: '1.12.5'
           - platform: linux/amd64
             os: ubuntu-latest
             tag_prefix: benchmarking
             check-bounds: 'auto'
-            julia_version: '1.12.4'
+            julia_version: '1.12.5'
           - platform: linux/amd64
             os: ubuntu-latest
             tag_prefix: test
             check-bounds: 'yes'
-            julia_version: '1.12.4'
-          # - platform: linux/arm64
-          #   os: ubuntu-24.04-arm
-          #   tag_prefix: docs
-          #   check-bounds: 'false'
-          #   julia_version: '1.12.4'
-          # - platform: linux/arm64
-          #   os: ubuntu-24.04-arm
-          #   tag_prefix: test
-          #   check-bounds: 'true'
-          #   julia_version: '1.12.4'
+            julia_version: '1.12.5'
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120

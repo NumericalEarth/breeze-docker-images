@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG JULIA_VERSION=1.12.4
+ARG JULIA_VERSION=1.12.5
 FROM julia:${JULIA_VERSION}
 
 # Install some dependencies
