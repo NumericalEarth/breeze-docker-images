@@ -82,7 +82,7 @@ jobs:
       - name: Lowercase image name
         run: |
           IMAGE_NAME=$(echo ${IMAGE_NAME} | tr A-Z a-z)
-          echo "IMAGE_NAME=${IMAGE_NAME}" >> "${GITHUB_ENV}"
+          echo "IMAGE_NAME=${IMAGE_NAME}" | tee -a "${GITHUB_ENV}"
 
       # Needed to make caching on GHA work: https://stackoverflow.com/a/73884678.
       # https://github.com/docker/setup-buildx-action
@@ -148,7 +148,7 @@ jobs:
       - name: Lowercase image name
         run: |
           IMAGE_NAME=$(echo ${IMAGE_NAME} | tr A-Z a-z)
-          echo "IMAGE_NAME=${IMAGE_NAME}" >> "${GITHUB_ENV}"
+          echo "IMAGE_NAME=${IMAGE_NAME}" | tee -a "${GITHUB_ENV}"
 
       - name: Download digests
         uses: actions/download-artifact@v8
@@ -186,3 +186,13 @@ jobs:
               --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VARIANT} \
               ${SOURCES}
           done
+
+      - name: Get package name
+        run: |
+          PACKAGE_NAME=$(echo ${{ env.IMAGE_NAME }} | cut -d/ -f2)
+          echo "PACKAGE_NAME=${PACKAGE_NAME}" | tee -a "${GITHUB_ENV}"
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ env.PACKAGE_NAME }}
+          package-type: 'container'
+          min-versions-to-keep: 25
