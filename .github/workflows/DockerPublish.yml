@@ -53,6 +53,11 @@ jobs:
             tag_prefix: test
             check-bounds: 'yes'
             julia_version: '1.12.5'
+          - platform: linux/amd64
+            os: ubuntu-latest
+            tag_prefix: test
+            check-bounds: 'auto'
+            julia_version: '1.11.9'
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
@@ -185,4 +190,4 @@ jobs:
         with:
           package-name: ${{ env.PACKAGE_NAME }}
           package-type: 'container'
-          min-versions-to-keep: 25
+          min-versions-to-keep: 30
