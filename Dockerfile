@@ -57,9 +57,7 @@ RUN . /julia_cpu_target.sh && JULIA_PKG_PRECOMPILE_AUTO="false" julia --color=ye
               Pkg.rm("Reactant"); \
               Pkg.precompile(); \
               #= revert bundled depot changes =# \
-              run(`find $bundled_depot/compiled -type f -writable -exec chmod +w \{\} \;`)' && \
-    #= demote the JLL to an [extras] dep =# \
-    find /usr/local/share/julia/environments -name Project.toml -exec sed -i 's/deps/extras/' {} +
+              run(`find $bundled_depot/compiled -type f -writable -exec chmod +w \{\} \;`)'
 
 # install CUDA.jl itself
 RUN . /julia_cpu_target.sh && julia --color=yes --check-bounds=${CHECK_BOUNDS} -e 'using Pkg; Pkg.add("CUDA"); \
