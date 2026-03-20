@@ -25,6 +25,8 @@ ENV JULIA_DEPOT_PATH=/usr/local/share/julia:
 ENV JULIA_PROJECT='@breeze'
 # Add the environment to the load path
 ENV JULIA_LOAD_PATH=:${JULIA_PROJECT}
+# Use eager registry to get latest packages possible from PkgServer
+ENV JULIA_PKG_SERVER_REGISTRY_PREFERENCE=eager
 
 # Follow https://github.com/JuliaGPU/CUDA.jl/blob/5d9474ae73fab66989235f7ff4fd447d5ee06f8e/Dockerfile
 
