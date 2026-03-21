@@ -56,7 +56,7 @@ jobs:
           - platform: linux/amd64
             os: ubuntu-latest
             tag_prefix: test
-            check-bounds: 'yes'
+            check-bounds: 'auto'
             julia_version: '1.12.5'
           - platform: linux/amd64
             os: ubuntu-latest
