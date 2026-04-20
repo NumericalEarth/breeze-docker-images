@@ -69,7 +69,7 @@ RUN . /julia_cpu_target.sh && julia --color=yes --check-bounds=${CHECK_BOUNDS} -
 RUN git clone --depth=1 https://github.com/NumericalEarth/Breeze.jl /tmp/Breeze.jl
 
 # Instantiate environment
-RUN . /julia_cpu_target.sh && LD_LIBRARY_PATH='.' julia --color=yes --project=/tmp/Breeze.jl/${ENV_NAME} --check-bounds=${CHECK_BOUNDS} -e 'using Pkg; Pkg.instantiate()'
+RUN . /julia_cpu_target.sh && LD_LIBRARY_PATH='.' julia --color=yes --project=/tmp/Breeze.jl/${ENV_NAME} --check-bounds=${CHECK_BOUNDS} -e 'using Pkg; Pkg.instantiate(); Pkg.gc()'
 
 # Clean up Breeze clone
 RUN rm -rf /tmp/Breeze.jl
