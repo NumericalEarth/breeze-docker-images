@@ -62,7 +62,7 @@ RUN . /julia_cpu_target.sh && JULIA_PKG_PRECOMPILE_AUTO="false" julia --color=ye
               run(`find $bundled_depot/compiled -type f -writable -exec chmod +w \{\} \;`)'
 
 # install CUDA.jl itself
-RUN . /julia_cpu_target.sh && julia --color=yes --check-bounds=${CHECK_BOUNDS} -e 'using Pkg; Pkg.add("CUDA"); \
+RUN . /julia_cpu_target.sh && julia --color=yes --check-bounds=${CHECK_BOUNDS} -e 'using Pkg; Pkg.add(; name="CUDA", version="6.0"); \
     using CUDA; CUDA.precompile_runtime()'
 
 # Clone Breeze
