@@ -73,9 +73,8 @@ RUN . /julia_cpu_target.sh && JULIA_PKG_PRECOMPILE_AUTO="false" julia --color=ye
 RUN . /julia_cpu_target.sh && julia --color=yes --check-bounds=${CHECK_BOUNDS} -e 'using Pkg; Pkg.add(; name="CUDA", version="6.0"); \
     using CUDA; CUDA.precompile_runtime()'
 
-# Clone NumericalEarth and instantiate environment and clean up NumericalEarth clone within
-# the same step so that we don't cache everything was written in this directory.  In
-# particular, the CondaPkg environment would occupy lots of space in this layer, needlessly.
+# Clone Breeze, instantiate environment, and clean up Breeze clone within
+# the same step so that we don't cache everything was written in this directory.
 RUN git clone --depth=1 https://github.com/NumericalEarth/Breeze.jl /tmp/Breeze.jl && \
     . /julia_cpu_target.sh && LD_LIBRARY_PATH='.' julia --color=yes \
     --project=/tmp/Breeze.jl/${ENV_NAME} \
