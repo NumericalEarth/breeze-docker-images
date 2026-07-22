@@ -58,6 +58,11 @@ jobs:
             tag_prefix: test
             check-bounds: 'auto'
             julia_version: '1.11.9'
+          - platform: linux/amd64
+            os: ubuntu-latest
+            tag_prefix: test
+            check-bounds: 'auto'
+            julia_version: '1.13.0-rc1'
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
