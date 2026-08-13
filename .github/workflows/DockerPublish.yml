@@ -62,7 +62,7 @@ jobs:
             os: ubuntu-latest
             tag_prefix: test
             check-bounds: 'auto'
-            julia_version: '1.13.0-rc1'
+            julia_version: '1.13.0-rc2'
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
