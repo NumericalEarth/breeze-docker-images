@@ -77,13 +77,36 @@ RUN git clone --depth=1 https://github.com/NumericalEarth/Breeze.jl /tmp/Breeze.
               using CUDA; \
               CUDA.precompile_runtime(); \
               \
-              #= install the same versions in `@breeze`.  Since CUDA is loaded in this session, =# \
-              #= `Pkg.add` will also prefer the loaded versions of its dependencies.           =# \
-              versions = Dict(p.name => p.version for p in values(Pkg.dependencies())); \
+              #= install in `@breeze` the same versions of the packages *and of all their     =# \
+              #= recursive dependencies*: if any dependency had a different version, all the  =# \
+              #= packages depending on it would need to be precompiled again.  To do this we  =# \
+              #= seed `@breeze` with the subset of the target manifest needed by the packages =# \
+              #= and then add them while preserving all the versions in the manifest.         =# \
+              using TOML; \
+              pkgs = Pkg.dependencies(); \
+              closure = Set{Base.UUID}(); \
+              queue = [uuid for (uuid, p) in pkgs if p.name in ("CUDA", "CUDA_Runtime_jll", "Reactant_jll")]; \
+              while !isempty(queue); \
+                  uuid = pop!(queue); \
+                  uuid in closure && continue; \
+                  push!(closure, uuid); \
+                  append!(queue, values(pkgs[uuid].dependencies)); \
+              end; \
+              manifest = TOML.parsefile(Base.project_file_manifest_path(Base.active_project())); \
+              delete!(manifest, "project_hash"); \
+              #= (weak) dependencies may be listed only by name, which is ambiguous when the  =# \
+              #= named package is not in the filtered manifest: list them as `name => uuid`.  =# \
+              uuids = Dict(name => only(entries)["uuid"] for (name, entries) in manifest["deps"] if length(entries) == 1); \
+              for entries in values(manifest["deps"]), entry in entries, key in ("deps", "weakdeps"); \
+                  deps = get(entry, key, nothing); \
+                  deps isa Vector && (entry[key] = Dict(name => uuids[name] for name in deps)); \
+              end; \
+              manifest["deps"] = filter(!isempty ∘ last, \
+                  Dict(name => filter(e -> Base.UUID(e["uuid"]) in closure, entries) for (name, entries) in manifest["deps"])); \
               breeze_env = "/usr/local/share/julia/environments/breeze"; \
-              rm("$breeze_env/Project.toml"); \
+              open(io -> TOML.print(io, manifest; sorted=true), "$breeze_env/Manifest.toml", "w"); \
               Pkg.activate(breeze_env); \
-              Pkg.add([PackageSpec(; name, version=versions[name]) for name in ("CUDA", "CUDA_Runtime_jll", "Reactant_jll")]); \
+              Pkg.add(["CUDA", "CUDA_Runtime_jll", "Reactant_jll"]; preserve=Pkg.PRESERVE_ALL); \
               Pkg.precompile(); \
               \
               #= revert bundled depot changes =# \
