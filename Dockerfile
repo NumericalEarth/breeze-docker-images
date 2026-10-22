@@ -45,40 +45,75 @@ RUN /bin/sh -c 'export DEBIAN_FRONTEND=noninteractive \
     && apt-get autoclean \
     && rm -rf /var/lib/apt/lists/*'
 
-# pre-install the CUDA toolkit from an artifact. we do this separately from CUDA.jl so that
-# this layer can be cached independently. it also avoids double precompilation of CUDA.jl in
-# order to call `CUDA.set_runtime_version!`.
-# Note: we first install install `Reactant` & `Reactant_jll` to resolve the environment
-# together, and then remove `Reactant` because we don't need it at this stage, and finally
-# we precompile the environment.  This should hopefully avoid installing two large
-# `Reactant_jll` artifacts when we later instantiate the environment.
-RUN . /julia_cpu_target.sh && JULIA_PKG_PRECOMPILE_AUTO="false" julia --color=yes --check-bounds=${CHECK_BOUNDS} -e '#= make bundled depot non-writable (JuliaLang/Pkg.jl#4120) =# \
+# Configure the preferences for CUDA_Runtime_jll and Reactant_jll in the `@breeze`
+# environment, which is in the load path.  The packages need to be listed in the project
+# for the preferences to be picked up, but we only put them in `[extras]` for the time
+# being, so that we don't have to resolve the environment now: they will be installed
+# later with the same versions resolved in the target environment, to avoid installing
+# multiple versions of the large `Reactant_jll` and CUDA artifacts.
+RUN breeze_env=/usr/local/share/julia/environments/breeze && \
+    mkdir -p "${breeze_env}" && \
+    printf '[CUDA_Runtime_jll]\nversion = "%s"\n[Reactant_jll]\ngpu = "cuda"\ngpu_version = "%s"\n' \
+        "${CUDA_VERSION}" "${REACTANT_CUDA_VERSION}" > "${breeze_env}/LocalPreferences.toml" && \
+    printf '[extras]\nCUDA_Runtime_jll = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"\nReactant_jll = "0192cb87-2b54-54ad-80e0-3be72ad8a3c0"\n' \
+        > "${breeze_env}/Project.toml"
+
+# Clone Breeze, instantiate the target environment, install in `@breeze` the same versions
+# of CUDA and the JLLs resolved in the target environment (they are all already in the
+# depot at that point, so nothing is downloaded or compiled twice), and clean up the
+# Breeze clone, all within the same step so that we don't cache everything that was written
+# in the clone directory.
+RUN git clone --depth=1 https://github.com/NumericalEarth/Breeze.jl /tmp/Breeze.jl && \
+    . /julia_cpu_target.sh && LD_LIBRARY_PATH='.' JULIA_PKG_PRECOMPILE_AUTO="false" julia --color=yes \
+    --project=/tmp/Breeze.jl/${ENV_NAME} \
+    --check-bounds=${CHECK_BOUNDS} -e '#= make bundled depot non-writable (JuliaLang/Pkg.jl#4120) =# \
               bundled_depot = last(DEPOT_PATH); \
               run(`find $bundled_depot/compiled -type f -writable -exec chmod -w \{\} \;`); \
-              #= configure the preference =# \
-              env = "/usr/local/share/julia/environments/breeze"; \
-              mkpath(env); \
-              write("$env/LocalPreferences.toml", \
-                    "[CUDA_Runtime_jll]\nversion = \"'${CUDA_VERSION}'\"\n[Reactant_jll]\ngpu = \"cuda\"\ngpu_version = \"'${REACTANT_CUDA_VERSION}'\""); \
               \
-              #= install the JLLs =# \
+              #= instantiate the target environment =# \
               using Pkg; \
-              Pkg.add(["CUDA_Runtime_jll", "Reactant_jll", "Reactant"]); \
-              Pkg.rm("Reactant"); \
+              Pkg.instantiate(); \
               Pkg.precompile(); \
+              using CUDA; \
+              CUDA.precompile_runtime(); \
+              \
+              #= install in `@breeze` the same versions of the packages *and of all their     =# \
+              #= recursive dependencies*: if any dependency had a different version, all the  =# \
+              #= packages depending on it would need to be precompiled again.  To do this we  =# \
+              #= seed `@breeze` with the subset of the target manifest needed by the packages =# \
+              #= and then add them while preserving all the versions in the manifest.  The    =# \
+              #= versions of the packages themselves must be explicit, because in Julia v1.11 =# \
+              #= `PRESERVE_ALL` does not apply to the packages being added.                   =# \
+              using TOML; \
+              pkgs = Pkg.dependencies(); \
+              closure = Set{Base.UUID}(); \
+              roots = [uuid for (uuid, p) in pkgs if p.name in ("CUDA", "CUDA_Runtime_jll", "Reactant_jll")]; \
+              queue = copy(roots); \
+              while !isempty(queue); \
+                  uuid = pop!(queue); \
+                  uuid in closure && continue; \
+                  push!(closure, uuid); \
+                  append!(queue, values(pkgs[uuid].dependencies)); \
+              end; \
+              manifest = TOML.parsefile(Base.project_file_manifest_path(Base.active_project())); \
+              delete!(manifest, "project_hash"); \
+              #= (weak) dependencies may be listed only by name, which is ambiguous when the  =# \
+              #= named package is not in the filtered manifest: list them as `name => uuid`.  =# \
+              uuids = Dict(name => only(entries)["uuid"] for (name, entries) in manifest["deps"] if length(entries) == 1); \
+              for entries in values(manifest["deps"]), entry in entries, key in ("deps", "weakdeps"); \
+                  deps = get(entry, key, nothing); \
+                  deps isa Vector && (entry[key] = Dict(name => uuids[name] for name in deps)); \
+              end; \
+              manifest["deps"] = filter(!isempty ∘ last, \
+                  Dict(name => filter(e -> Base.UUID(e["uuid"]) in closure, entries) for (name, entries) in manifest["deps"])); \
+              breeze_env = "/usr/local/share/julia/environments/breeze"; \
+              open(io -> TOML.print(io, manifest; sorted=true), "$breeze_env/Manifest.toml", "w"); \
+              Pkg.activate(breeze_env); \
+              Pkg.add([PackageSpec(; pkgs[uuid].name, pkgs[uuid].version) for uuid in roots]; preserve=Pkg.PRESERVE_ALL); \
+              Pkg.precompile(); \
+              \
               #= revert bundled depot changes =# \
-              run(`find $bundled_depot/compiled -type f -writable -exec chmod +w \{\} \;`)'
-
-# install CUDA.jl itself
-RUN . /julia_cpu_target.sh && julia --color=yes --check-bounds=${CHECK_BOUNDS} -e 'using Pkg; Pkg.add(; name="CUDA", version="6"); \
-    using CUDA; CUDA.precompile_runtime()'
-
-# Clone Breeze, instantiate environment, and clean up Breeze clone within
-# the same step so that we don't cache everything was written in this directory.
-RUN git clone --depth=1 https://github.com/NumericalEarth/Breeze.jl /tmp/Breeze.jl && \
-    . /julia_cpu_target.sh && LD_LIBRARY_PATH='.' julia --color=yes \
-    --project=/tmp/Breeze.jl/${ENV_NAME} \
-    --check-bounds=${CHECK_BOUNDS} -e 'using Pkg; Pkg.instantiate()' && \
+              run(`find $bundled_depot/compiled -type f -writable -exec chmod +w \{\} \;`)' && \
     rm -rf /tmp/Breeze.jl
 
 # Remove fake libcuda.so.1
