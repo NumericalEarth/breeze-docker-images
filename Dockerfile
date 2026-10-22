@@ -77,13 +77,13 @@ RUN git clone --depth=1 https://github.com/NumericalEarth/Breeze.jl /tmp/Breeze.
               using CUDA; \
               CUDA.precompile_runtime(); \
               \
-              #= install the same versions in `@breeze` =# \
+              #= install the same versions in `@breeze`.  Since CUDA is loaded in this session, =# \
+              #= `Pkg.add` will also prefer the loaded versions of its dependencies.           =# \
               versions = Dict(p.name => p.version for p in values(Pkg.dependencies())); \
               breeze_env = "/usr/local/share/julia/environments/breeze"; \
               rm("$breeze_env/Project.toml"); \
               Pkg.activate(breeze_env); \
-              Pkg.add([PackageSpec(; name, version=versions[name]) for name in ("CUDA", "CUDA_Runtime_jll", "Reactant_jll")]; \
-                      preserve=Pkg.PRESERVE_ALL_INSTALLED); \
+              Pkg.add([PackageSpec(; name, version=versions[name]) for name in ("CUDA", "CUDA_Runtime_jll", "Reactant_jll")]); \
               Pkg.precompile(); \
               \
               #= revert bundled depot changes =# \
