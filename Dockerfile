@@ -81,11 +81,14 @@ RUN git clone --depth=1 https://github.com/NumericalEarth/Breeze.jl /tmp/Breeze.
               #= recursive dependencies*: if any dependency had a different version, all the  =# \
               #= packages depending on it would need to be precompiled again.  To do this we  =# \
               #= seed `@breeze` with the subset of the target manifest needed by the packages =# \
-              #= and then add them while preserving all the versions in the manifest.         =# \
+              #= and then add them while preserving all the versions in the manifest.  The    =# \
+              #= versions of the packages themselves must be explicit, because in Julia v1.11 =# \
+              #= `PRESERVE_ALL` does not apply to the packages being added.                   =# \
               using TOML; \
               pkgs = Pkg.dependencies(); \
               closure = Set{Base.UUID}(); \
-              queue = [uuid for (uuid, p) in pkgs if p.name in ("CUDA", "CUDA_Runtime_jll", "Reactant_jll")]; \
+              roots = [uuid for (uuid, p) in pkgs if p.name in ("CUDA", "CUDA_Runtime_jll", "Reactant_jll")]; \
+              queue = copy(roots); \
               while !isempty(queue); \
                   uuid = pop!(queue); \
                   uuid in closure && continue; \
@@ -106,7 +109,7 @@ RUN git clone --depth=1 https://github.com/NumericalEarth/Breeze.jl /tmp/Breeze.
               breeze_env = "/usr/local/share/julia/environments/breeze"; \
               open(io -> TOML.print(io, manifest; sorted=true), "$breeze_env/Manifest.toml", "w"); \
               Pkg.activate(breeze_env); \
-              Pkg.add(["CUDA", "CUDA_Runtime_jll", "Reactant_jll"]; preserve=Pkg.PRESERVE_ALL); \
+              Pkg.add([PackageSpec(; pkgs[uuid].name, pkgs[uuid].version) for uuid in roots]; preserve=Pkg.PRESERVE_ALL); \
               Pkg.precompile(); \
               \
               #= revert bundled depot changes =# \
