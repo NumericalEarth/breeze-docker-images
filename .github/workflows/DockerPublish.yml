@@ -81,9 +81,6 @@ jobs:
         with:
           preinstalled-runtimes: true
           large-packages: false
-      - name: Cleanup /opt
-        run: |
-          sudo rm -rf /opt/*
       - name: Show available storage after cleanup
         run: |
           echo " --> df -h /"
